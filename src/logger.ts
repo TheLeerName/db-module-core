@@ -1,8 +1,6 @@
 export function info(moduleName: string, message: any, values?: any | null) {
 	if (values == null) values = {};
 
-	message = "[" + "]";
-	message = `\x1b[36m${message}\x1b[0m`;
 	for (let [k, v] of Object.entries<any>(values))
 		message += `\n\t${k}: \x1b[32m"${v}"\x1b[0m`;
 
@@ -26,7 +24,7 @@ export function error(moduleName: string, whatHappened: any, values?: any | null
 function addTimeAndModuleName(moduleName: string, message: string): string {
 	var date = new Date(Date.now());
 	var h = date.getHours(); var m = date.getMinutes(); var s = date.getSeconds();
-	var time = `\x1b[34m[${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}]\x1b[0m`;
-	var module = `\x1b[35m[${moduleName}]\x1b[0m`;
-	return `${time} ${module} ${message}`
+	var time = `\x1b[34m[${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}]`;
+	var module = `\x1b[36m[${moduleName}]\x1b[0m`;
+	return `\n${time} ${module} ${message}`
 }
