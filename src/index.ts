@@ -9,6 +9,7 @@ var globalData : any = {};
 loadGlobalData();
 
 const modules : string[] = [];
+const moduleName = "core";
 const appFolder = process.argv[1].substring(0, process.argv[1].lastIndexOf('\\') - 4);
 
 for (let module of fs.readdirSync(`${appFolder}\\modules`)) {
@@ -28,12 +29,12 @@ function loadConfigINI() : INI {
 				const moduleStrINI = fs.readFileSync(`${module}/src/config.ini.module`).toString();
 				strINI += `\n[${module}]\n` + moduleStrINI + '\n';
 				strINIWasChanged = true;
-				L.info('Adding missing module config to config.ini', {module});
+				L.info(moduleName, 'Adding missing module config to config.ini', {module});
 
 				const moduleINI = new INI().parse(moduleStrINI);
 				for (let option of moduleINI.options(null)) {
 					if (option.length == 0) {
-						L.error("Parameter isn't specified in config.ini", {module, missingParameter: option});
+						L.error(moduleName, "Parameter isn't specified in config.ini", {module, missingParameter: option});
 						process.exit();
 					}
 				}
@@ -43,16 +44,15 @@ function loadConfigINI() : INI {
 		if (strINIWasChanged) fs.writeFileSync('config.ini', strINI);
 		return new INI().parse(strINI);
 	} else {
-		L.info('Creating config.ini...');
+		L.info(moduleName, 'Creating config.ini...');
 
 		var ini : string = "";
-		const module = "core";
-		ini += `[${module}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
+		ini += `[${moduleName}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
 		for (let module of modules)
 			ini += `\n[${module}]\n` + fs.readFileSync(`${module}/src/config.ini.module`).toString() + '\n';
 
 		fs.writeFileSync('config.ini', ini);
-		L.info('Please specify parameters in config.ini and run app again');
+		L.info(moduleName, 'Please specify parameters in config.ini and run app again');
 		process.exit();
 	}
 }
@@ -108,7 +108,7 @@ export const client = new Discord.Client<true>({
 
 for (let module of modules) {
 	const m = require(`../modules/${module}/src/index`);
-	L.info('Module loaded', {module});
+	L.info(moduleName, 'Module loaded', {module});
 	m.main();
 }
 
@@ -117,7 +117,7 @@ client.on('warn', (m) => console.log(`\x1b[33m${m}\x1b[0m`));
 client.on('error', (m) => console.log(`\x1b[31m${m}\x1b[0m`));
 client.on("ready", async () => {
 	if (configINI.getBoolean('core', 'printInviteLink'))
-		L.info(`Generated invite link`, {url: generateInviteUrl()});
+		L.info(moduleName, `Generated invite link`, {url: generateInviteUrl()});
 });
 
-client.login(configINI.get('core', 'token')).then((v) => L.info('Client connected'));
+client.login(configINI.get('core', 'token')).then((v) => L.info(moduleName, 'Client connected'));
