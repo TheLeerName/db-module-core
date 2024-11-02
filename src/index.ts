@@ -5,12 +5,15 @@ import {ConfigIniParser as INI} from 'config-ini-parser';
 
 import * as L from './logger';
 
-console.log(new INI().parse(fs.readFileSync('src/config.ini.module').toString()).get(null, 'activity'));
+var globalData : any = {};
+loadGlobalData();
 
 const modules : string[] = [];
-for (let dir of fs.readdirSync(process.argv[1].substring(0, process.argv[1].lastIndexOf('\\') - 4))) {
-	if (dir.startsWith('db-module-')) {
-		modules.push(dir);
+const appFolder = process.argv[1].substring(0, process.argv[1].lastIndexOf('\\') - 4);
+
+for (let module of fs.readdirSync(`${appFolder}\\modules`)) {
+	if (fs.existsSync(`${appFolder}\\modules\\${module}\\src`)) {
+		modules.push(module);
 	}
 }
 
@@ -21,17 +24,16 @@ function loadConfigINI() : INI {
 		const ini = new INI().parse(strINI);
 		const iniSections = ini.sections();
 		for (let module of modules) {
-			const moduleName = module.substring('db-module-'.length, module.length);
-			if (!iniSections.includes(moduleName)) {
+			if (!iniSections.includes(module)) {
 				const moduleStrINI = fs.readFileSync(`${module}/src/config.ini.module`).toString();
-				strINI += `\n[${moduleName}]\n` + moduleStrINI + '\n';
+				strINI += `\n[${module}]\n` + moduleStrINI + '\n';
 				strINIWasChanged = true;
-				L.info('Adding missing module config to config.ini', {moduleName});
+				L.info('Adding missing module config to config.ini', {module});
 
 				const moduleINI = new INI().parse(moduleStrINI);
 				for (let option of moduleINI.options(null)) {
 					if (option.length == 0) {
-						L.error("Parameter isn't specified in config.ini", {moduleName, missingParameter: option});
+						L.error("Parameter isn't specified in config.ini", {module, missingParameter: option});
 						process.exit();
 					}
 				}
@@ -44,13 +46,10 @@ function loadConfigINI() : INI {
 		L.info('Creating config.ini...');
 
 		var ini : string = "";
-		const module = "db-module-core";
-		const moduleName = module.substring('db-module-'.length, module.length);
-		ini += `[${moduleName}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
-		for (let module of modules) {
-			const moduleName = module.substring('db-module-'.length, module.length);
-			ini += `\n[${moduleName}]\n` + fs.readFileSync(`${module}/src/config.ini.module`).toString() + '\n';
-		}
+		const module = "core";
+		ini += `[${module}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
+		for (let module of modules)
+			ini += `\n[${module}]\n` + fs.readFileSync(`${module}/src/config.ini.module`).toString() + '\n';
 
 		fs.writeFileSync('config.ini', ini);
 		L.info('Please specify parameters in config.ini and run app again');
@@ -58,12 +57,11 @@ function loadConfigINI() : INI {
 	}
 }
 
-var globalData : any = {};
 function saveGlobalData() {
 	fs.writeFileSync('guildData.json5', JSON5.stringify(globalData, null, '\t'));
 }
 function loadGlobalData() {
-	if (fs.existsSync('guildData.json5')) return;
+	if (!fs.existsSync('guildData.json5')) return;
 
 	globalData = JSON5.parse(fs.readFileSync('guildData.json5').toString());
 }
@@ -95,8 +93,6 @@ export function generateInviteUrl(): string {
 
 export const configINI : INI = loadConfigINI();
 
-loadGlobalData();
-
 export const client = new Discord.Client<true>({
 	failIfNotExists: false,
 	intents: [Discord.IntentsBitField.Flags.GuildMessages, Discord.IntentsBitField.Flags.MessageContent, Discord.IntentsBitField.Flags.Guilds],
@@ -110,6 +106,12 @@ export const client = new Discord.Client<true>({
 	},
 });
 
+for (let module of modules) {
+	const m = require(`../modules/${module}/src/index`);
+	L.info('Module loaded', {module});
+	m.main();
+}
+
 //client.on('debug', (m) => console.log(m));
 client.on('warn', (m) => console.log(`\x1b[33m${m}\x1b[0m`));
 client.on('error', (m) => console.log(`\x1b[31m${m}\x1b[0m`));
@@ -118,4 +120,4 @@ client.on("ready", async () => {
 		L.info(`Generated invite link`, {url: generateInviteUrl()});
 });
 
-client.login(configINI.get('core', 'token'));
+client.login(configINI.get('core', 'token')).then((v) => L.info('Client connected'));
