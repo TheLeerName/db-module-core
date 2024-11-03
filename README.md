@@ -14,7 +14,7 @@ git clone https://github.com/TheLeerName/db-module-core
 
 | Name | Link |
 |---|---|
-| modules/twitch-notifications | https://github.com/TheLeerName/db-module-twitch-notifications |
+| `modules/twitch-notifications` | https://github.com/TheLeerName/db-module-twitch-notifications |
 7. Run this command with each module you want:
 ```
 git submodule update --init <module_name>
@@ -31,4 +31,4 @@ npx tsc
 | Question | Answer |
 |---|---|
 | How to remove module? | Remove folder of module in `modules` folder |
-| How to add specific module? (for example: `modules/twitch-notifications`) | git submodule update --init modules/twitch-notifications |
+| How to add specific module? (for example: `modules/twitch-notifications`) | Run command: `git submodule update --init modules/twitch-notifications` |
