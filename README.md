@@ -11,6 +11,7 @@ git clone https://github.com/TheLeerName/db-module-core
 4. Open created `db-module-core` folder
 5. Open terminal in `db-module-core` folder
 6. Choose modules which you want to use:
+
 | Name | Link |
 |---|---|
 | modules/twitch-notifications | https://github.com/TheLeerName/db-module-twitch-notifications |
