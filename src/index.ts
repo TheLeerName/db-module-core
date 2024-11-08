@@ -119,5 +119,6 @@ client.on("ready", async () => {
 	if (configINI.getBoolean('core', 'printInviteLink'))
 		L.info(moduleName, `Generated invite link`, {url: generateInviteUrl()});
 });
+process.on('uncaughtException', (e) => L.error(moduleName, 'Unexpected error', null, e));
 
 client.login(configINI.get('core', 'token')).then((v) => L.info(moduleName, 'Client connected'));
