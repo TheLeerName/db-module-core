@@ -1,5 +1,4 @@
 import fs from 'fs';
-import JSON5 from 'json5';
 import * as Discord from 'discord.js';
 import {ConfigIniParser as INI} from 'config-ini-parser';
 
@@ -8,14 +7,13 @@ L.init();
 
 const currentDataVersion = 1;
 
-var globalData: {version: number, guildData: any} = fs.existsSync('data.json5') ? JSON5.parse(fs.readFileSync('data.json5').toString()) : {version: currentDataVersion, guildData: {}};
+var globalData: {version: number, guildData: any} = fs.existsSync('data.json') ? JSON.parse(fs.readFileSync('data.json').toString()) : {version: currentDataVersion, guildData: {}};
 
 const modules: string[] = [];
 const moduleName = "core";
-const appFolder = process.argv[1].substring(0, process.argv[1].lastIndexOf('\\') - 4);
 
-for (let module of fs.readdirSync(`${appFolder}\\modules`)) {
-	if (fs.existsSync(`${appFolder}\\modules\\${module}\\src`)) {
+for (let module of fs.readdirSync(`modules`)) {
+	if (fs.existsSync(`modules/${module}/src`)) {
 		modules.push(module);
 	}
 }
@@ -89,7 +87,7 @@ export function saveModuleData(name: string, moduleData: any) {
 		if (globalData.guildData[guildID] == null) globalData.guildData[guildID] = {};
 		globalData.guildData[guildID][name] = guildData;
 	}
-	fs.writeFileSync('data.json5', JSON5.stringify(globalData, null, '\t'));
+	fs.writeFileSync('data.json5', JSON.stringify(globalData, null, '\t'));
 }
 
 export function generateInviteUrl(): string {
