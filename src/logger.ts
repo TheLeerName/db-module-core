@@ -42,8 +42,7 @@ function start(stack?: NodeJS.CallSite): string {
 export function getFileNameAndLineNumber(stack?: NodeJS.CallSite): string {
 	stack ??= getStack();
 
-	var f = (stack.getFileName() ?? "").split('\\');
-	return f.slice(f.length - 3, f.length).join('/') + ':' + stack.getLineNumber();
+	return (stack.getFileName() ?? "") + ':' + stack.getLineNumber();
 }
 
 export function getStack(num: number = 2): NodeJS.CallSite {
