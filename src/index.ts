@@ -12,8 +12,8 @@ var globalData: {version: number, guildData: any} = fs.existsSync('data.json') ?
 const modules: string[] = [];
 const moduleName = "core";
 
-for (let module of fs.readdirSync(`modules`)) {
-	if (fs.existsSync(`modules/${module}/src`)) {
+for (let module of fs.readdirSync(`dist/modules`)) {
+	if (fs.existsSync(`dist/modules/${module}/src`)) {
 		modules.push(module);
 	}
 }
@@ -37,38 +37,45 @@ function checkForNonexistentOptions(strINI: string) {
 
 function loadConfigINI(): INI {
 	if (fs.existsSync('config.ini')) {
-		var strINIWasChanged = false;
 		var strINI = fs.readFileSync('config.ini').toString();
+		if (fs.existsSync('modules')) {
+			var strINIWasChanged = false;
 
-		const ini = new INI().parse(strINI);
-		const iniSections = ini.sections();
-		for (let module of modules) {
-			if (!iniSections.includes(module)) {
-				L.info('Adding missing module config to config.ini', {module});
-				const moduleStrINI = fs.readFileSync(`modules/${module}/src/config.ini.module`).toString();
-				strINI += `\n[${module}]\n` + moduleStrINI + '\n';
-				strINIWasChanged = true;
+			const ini = new INI().parse(strINI);
+			const iniSections = ini.sections();
+			for (let module of modules) {
+				if (!iniSections.includes(module)) {
+					L.info('Adding missing module config to config.ini', {module});
+					const moduleStrINI = fs.readFileSync(`modules/${module}/src/config.ini.module`).toString();
+					strINI += `\n[${module}]\n` + moduleStrINI + '\n';
+					strINIWasChanged = true;
 
-				const moduleINI = new INI().parse(moduleStrINI);
-				for (let option of moduleINI.options(null)) {
-					if (option.length == 0) {
-						L.error("Parameter isn't specified in config.ini", {module, missingParameter: option});
-						process.exit();
+					const moduleINI = new INI().parse(moduleStrINI);
+					for (let option of moduleINI.options(null)) {
+						if (option.length == 0) {
+							L.error("Parameter isn't specified in config.ini", {module, missingParameter: option});
+							process.exit();
+						}
 					}
 				}
 			}
-		}
 
-		if (strINIWasChanged) fs.writeFileSync('config.ini', strINI);
-		checkForNonexistentOptions(strINI);
+			if (strINIWasChanged) fs.writeFileSync('config.ini', strINI);
+			checkForNonexistentOptions(strINI);
+		} else
+			L.error(`Can\'t check options of config.ini`, null, `./modules folder is not exists`);
+
 		return new INI().parse(strINI);
 	} else {
 		L.info('Creating config.ini...');
 
 		var ini: string = "";
 		ini += `[${moduleName}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
-		for (let module of modules)
-			ini += `\n[${module}]\n` + fs.readFileSync(`modules/${module}/src/config.ini.module`).toString() + '\n';
+		if (fs.existsSync('modules')) {
+			for (let module of modules)
+				ini += `\n[${module}]\n` + fs.readFileSync(`modules/${module}/src/config.ini.module`).toString() + '\n';
+		} else
+			L.error(`Can\'t check options of config.ini`, null, `./modules folder is not exists`);
 
 		fs.writeFileSync('config.ini', ini);
 		L.info('Please specify parameters in config.ini or take them from config-old.ini and run app again');
