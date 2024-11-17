@@ -94,7 +94,7 @@ export function saveModuleData(name: string, moduleData: any) {
 		if (globalData.guildData[guildID] == null) globalData.guildData[guildID] = {};
 		globalData.guildData[guildID][name] = guildData;
 	}
-	fs.writeFileSync('data.json5', JSON.stringify(globalData, null, '\t'));
+	fs.writeFileSync('data.json', JSON.stringify(globalData, null, '\t'));
 }
 
 export function generateInviteUrl(): string {
