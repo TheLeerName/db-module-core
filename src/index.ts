@@ -112,7 +112,12 @@ export const configINI: INI = loadConfigINI();
 
 export const client = new Discord.Client<true>({
 	failIfNotExists: false,
-	intents: [Discord.IntentsBitField.Flags.GuildMessages, Discord.IntentsBitField.Flags.MessageContent, Discord.IntentsBitField.Flags.Guilds],
+	intents: [
+		Discord.IntentsBitField.Flags.GuildMessages,
+		Discord.IntentsBitField.Flags.MessageContent,
+		Discord.IntentsBitField.Flags.Guilds,
+		Discord.IntentsBitField.Flags.GuildVoiceStates,
+	],
 	presence: {
 		activities: [
 			{
