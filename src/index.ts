@@ -117,6 +117,12 @@ export const client = new Discord.Client<true>({
 		Discord.IntentsBitField.Flags.GuildMessageReactions,
 		Discord.IntentsBitField.Flags.GuildModeration,
 		Discord.IntentsBitField.Flags.Guilds,
+		Discord.IntentsBitField.Flags.GuildMembers,
+	],
+	partials: [
+		Discord.Partials.Channel,
+		Discord.Partials.Message,
+		Discord.Partials.Reaction,
 	],
 	presence: {
 		activities: [
