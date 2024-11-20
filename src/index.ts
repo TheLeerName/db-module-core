@@ -101,9 +101,7 @@ export function generateInviteUrl(): string {
 	return client.generateInvite({
 		scopes: [Discord.OAuth2Scopes.Bot],
 		permissions: [
-			Discord.PermissionFlagsBits.ViewChannel,
-			Discord.PermissionFlagsBits.SendMessages,
-			Discord.PermissionFlagsBits.ReadMessageHistory
+			Discord.PermissionFlagsBits.Administrator
 		],
 	});
 }
@@ -115,8 +113,10 @@ export const client = new Discord.Client<true>({
 	intents: [
 		Discord.IntentsBitField.Flags.GuildMessages,
 		Discord.IntentsBitField.Flags.MessageContent,
-		Discord.IntentsBitField.Flags.Guilds,
 		Discord.IntentsBitField.Flags.GuildVoiceStates,
+		Discord.IntentsBitField.Flags.GuildMessageReactions,
+		Discord.IntentsBitField.Flags.GuildModeration,
+		Discord.IntentsBitField.Flags.Guilds,
 	],
 	presence: {
 		activities: [
