@@ -7,7 +7,7 @@ L.init();
 
 const currentDataVersion = 1;
 
-var globalData: {version: number, guildData: any} = fs.existsSync('data.json') ? JSON.parse(fs.readFileSync('data.json').toString()) : {version: currentDataVersion, guildData: {}};
+var data: {version: number, guildsData: any, modulesData: any} = fs.existsSync('data.json') ? JSON.parse(fs.readFileSync('data.json').toString()) : {version: currentDataVersion, guildsData: {}, modulesData: {}};
 
 const modules: string[] = [];
 const moduleName = "core";
@@ -83,18 +83,24 @@ function loadConfigINI(): INI {
 	}
 }
 
-export function loadModuleData(name: string): any {
+export function getModuleData(name: string): any {
+	return data.modulesData[name];
+}
+
+export function getModuleGuildsData(name: string): any {
 	const json: any = {};
-	for (let [guildID, modules] of Object.entries<any>(globalData.guildData))
+	for (let [guildID, modules] of Object.entries<any>(data.guildsData))
 		json[guildID] = modules[name];
 	return json;
 }
-export function saveModuleData(name: string, moduleData: any) {
-	for (let [guildID, guildData] of Object.entries<any>(moduleData)) {
-		if (globalData.guildData[guildID] == null) globalData.guildData[guildID] = {};
-		globalData.guildData[guildID][name] = guildData;
+export function saveModuleData(name: string, guildsData?: any, moduleData?: any) {
+	if (moduleData != null) data.modulesData[name] = moduleData;
+
+	if (guildsData != null) for (let [guildID, guildData] of Object.entries<any>(guildsData)) {
+		if (data.guildsData[guildID] == null) data.guildsData[guildID] = {};
+		data.guildsData[guildID][name] = guildData;
 	}
-	fs.writeFileSync('data.json', JSON.stringify(globalData, null, '\t'));
+	fs.writeFileSync('data.json', JSON.stringify(data, null, '\t'));
 }
 
 export function generateInviteUrl(): string {
