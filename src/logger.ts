@@ -1,8 +1,8 @@
 export function info(message: any, values?: any | null, stack?: NodeJS.CallSite) {
 	stack ??= getStack();
+	values ??= {};
 
 	message = start(stack) + message;
-	if (values == null) values = {};
 
 	for (let [k, v] of Object.entries<any>(values))
 		message += `\n\t${k}: \x1b[32m"${v}"\x1b[0m`;
@@ -12,11 +12,11 @@ export function info(message: any, values?: any | null, stack?: NodeJS.CallSite)
 
 export function error(whatHappened: any, values?: any | null, whyItHappened?: any | null, stack?: NodeJS.CallSite) {
 	stack ??= getStack();
-
-	whatHappened = start(stack) + whatHappened;
-	if (values == null) values = {};
+	values ??= {};
 
 	whatHappened = `\x1b[31m${whatHappened}\x1b[0m`;
+	whatHappened = start(stack) + whatHappened;
+
 	for (let [k, v] of Object.entries<any>(values))
 		whatHappened += `\n\t${k}: \x1b[32m"${v}"\x1b[0m`;
 	if (whyItHappened != null) {
