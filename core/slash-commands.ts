@@ -38,16 +38,17 @@ export async function updateSlashCommands(guild: Discord.Guild): Promise<number>
 }
 
 function loadSlashCommandsScriptsFromFolder(folder: string) {
-	if (fs.existsSync(folder) && fs.statSync(folder).isDirectory()) for (let commandScript of fs.readdirSync(folder))
-		if (commandScript.endsWith('.ts')) {
-			const m = require('../' + folder + '/' + commandScript.substring(0, commandScript.lastIndexOf('.')));
+	folder = __dirname.replaceAll('\\', '/') + '/' + folder;
+	if (fs.existsSync(folder)) for (let commandScript of fs.readdirSync(folder))
+		if (commandScript.endsWith('.js')) {
+			const m = require(folder + '/' + commandScript.substring(0, commandScript.lastIndexOf('.')));
 			if (m.main != null) slashCommands.push(...m.main());
 		}
 }
 
 export function main() {
-	for (let module of modules) loadSlashCommandsScriptsFromFolder('modules/' + module + '/slash-commands');
-	loadSlashCommandsScriptsFromFolder('core/slash-commands');
+	for (let module of modules) loadSlashCommandsScriptsFromFolder('../modules/' + module + '/slash-commands');
+	loadSlashCommandsScriptsFromFolder('slash-commands');
 
 	if (slashCommands.length > 0) {
 		client.on('ready', client => { for (let guild of client.guilds.cache.values()) updateSlashCommands(guild); });
