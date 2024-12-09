@@ -51,7 +51,7 @@ export function main() {
 	loadSlashCommandsScriptsFromFolder('slash-commands');
 
 	if (slashCommands.length > 0) {
-		client.on('ready', client => { for (let guild of client.guilds.cache.values()) updateSlashCommands(guild); });
+		//client.on('ready', client => { for (let guild of client.guilds.cache.values()) updateSlashCommands(guild); });
 		client.on('guildCreate', updateSlashCommands);
 		client.on('interactionCreate', interactionCreate);
 
