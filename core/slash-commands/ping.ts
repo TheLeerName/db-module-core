@@ -1,11 +1,11 @@
-import { setCallback, humanizeDuration } from './../slash-commands';
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommand, humanizeDuration } from './../slash-commands';
+import { EmbedBuilder } from 'discord.js';
 
-const pingCommand = setCallback(new SlashCommandBuilder()
+const pingCommand = new SlashCommand()
 .setName('ping')
 .setDescription('Pings bot')
-.setDescriptionLocalization('ru', 'Пингует бота'),
-async(interaction) => {
+.setDescriptionLocalization('ru', 'Пингует бота')
+.setCallback(async(interaction) => {
 	if (interaction.guild == null || !interaction.isChatInputCommand()) return;
 
 	await interaction.reply({embeds: [new EmbedBuilder()
@@ -33,6 +33,6 @@ async(interaction) => {
 	}
 });
 
-export function main(): SlashCommandBuilder[] {
+export function main(): SlashCommand[] {
 	return [pingCommand];
 }

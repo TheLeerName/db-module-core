@@ -1,11 +1,11 @@
-import { setCallback, humanizeDuration, updateSlashCommands } from './../slash-commands';
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommand, humanizeDuration, updateSlashCommands } from './../slash-commands';
+import { EmbedBuilder } from 'discord.js';
 
-const updateCommand = setCallback(new SlashCommandBuilder()
+const updateCommand = new SlashCommand()
 .setName('update')
 .setDescription('Updates slash commands of bot')
-.setDescriptionLocalization('ru', "Обновляет слэш-команды бота"),
-async(interaction) => {
+.setDescriptionLocalization('ru', "Обновляет слэш-команды бота")
+.setCallback(async(interaction) => {
 	if (interaction.guild == null || !interaction.isChatInputCommand()) return;
 
 	await interaction.reply({embeds: [new EmbedBuilder()
@@ -30,6 +30,6 @@ async(interaction) => {
 	}
 });
 
-export function main(): SlashCommandBuilder[] {
+export function main(): SlashCommand[] {
 	return [updateCommand];
 }

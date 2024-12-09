@@ -5,24 +5,35 @@ import fs from 'fs';
 import hD from 'humanize-duration';
 import * as Discord from 'discord.js';
 
+export class SlashCommand extends Discord.SlashCommandBuilder {
+	callback: SlashCommandCallback | null = null;
+	subcommands: SlashSubcommand[] = [];
+
+	setCallback(callback: SlashCommandCallback) {
+		this.callback = callback;
+		return this;
+	}
+
+	addSubcommands(...subcommands: SlashSubcommand[]) {
+		for (let subcommand of subcommands) {
+			this.addSubcommand(subcommand);
+			this.subcommands.push(subcommand);
+		}
+		return this;
+	}
+}
+
+export class SlashSubcommand extends Discord.SlashCommandSubcommandBuilder {
+	callback: SlashCommandCallback;
+
+	setCallback(callback: SlashCommandCallback) {
+		this.callback = callback;
+		return this;
+	}
+}
+
 export type SlashCommandCallback = (interaction: Discord.ChatInputCommandInteraction<Discord.CacheType> | Discord.AutocompleteInteraction<Discord.CacheType>)=>Promise<void>;
-
-export const slashCommands: Discord.SlashCommandBuilder[] = [];
-export const slashCommandCallbacks: Map<string, SlashCommandCallback> = new Map();
-
-export const slashSubcommands: Map<string, Discord.SlashCommandSubcommandBuilder[]> = new Map();
-export const slashSubcommandCallbacks: Map<string, SlashCommandCallback> = new Map();
-
-export function setCallback<Type extends Discord.SlashCommandBuilder | Discord.SlashCommandSubcommandBuilder>(command: Type, callback: SlashCommandCallback): Type {
-	(command instanceof Discord.SlashCommandBuilder ? slashCommandCallbacks : slashSubcommandCallbacks).set(command.name, callback);
-	return command;
-}
-
-export function addSubcommands(command: Discord.SlashCommandBuilder, ...subcommands: Discord.SlashCommandSubcommandBuilder[]): Discord.SlashCommandBuilder {
-	for (let subcommand of subcommands) command.addSubcommand(subcommand);
-	slashSubcommands.set(command.name, subcommands);
-	return command;
-}
+export const slashCommands: SlashCommand[] = [];
 
 export function humanizeDuration(n: number) {
 	return hD(n, {language: "ru", units: ["d", "h", "m", "s", "ms"]});
@@ -64,10 +75,9 @@ async function interactionCreate(interaction: Discord.Interaction) {
 	if (interaction.isChatInputCommand() || interaction.isAutocomplete())
 		for (let slashCommand of slashCommands)
 			if (slashCommand.name == interaction.commandName) {
-				slashCommandCallbacks.get(slashCommand.name)?.(interaction);
-				const options = slashSubcommands.get(slashCommand.name);
-				if (options != null) for (let slashSubcommand of options)
+				slashCommand.callback?.(interaction);
+				for (let slashSubcommand of slashCommand.subcommands)
 					if (slashSubcommand.name == interaction.options.getSubcommand())
-						slashSubcommandCallbacks.get(slashSubcommand.name)?.(interaction);
+						slashSubcommand.callback?.(interaction);
 			}
 }
