@@ -1,9 +1,11 @@
 {
   "devDependencies": {
+    "@types/humanize-duration": "^3.27.4",
     "typescript": "^5.6.3"
   },
   "dependencies": {
     "config-ini-parser": "^1.6.1",
-    "discord.js": "^14.16.3"
+    "discord.js": "^14.16.3",
+    "humanize-duration": "^3.32.1"
   }
 }

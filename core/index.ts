@@ -3,27 +3,22 @@ import * as Discord from 'discord.js';
 import {ConfigIniParser as INI} from 'config-ini-parser';
 
 import * as L from './logger';
+import { main as SlashCommandsMain } from './slash-commands';
 L.init();
 
 const currentDataVersion = 1;
 
-var data: {version: number, guildsData: any, modulesData: any} = fs.existsSync('data.json') ? JSON.parse(fs.readFileSync('data.json').toString()) : {version: currentDataVersion, guildsData: {}, modulesData: {}};
+var data: {version: number, guildsData: any, modulesData: any} = {version: currentDataVersion, guildsData: {}, modulesData: {}};
 
-const modules: string[] = [];
-const moduleName = "core";
-
-for (let module of fs.readdirSync(`dist/modules`)) {
-	if (fs.existsSync(`dist/modules/${module}/src`)) {
-		modules.push(module);
-	}
-}
+export const modules: string[] = [];
+export const moduleName = "core";
 
 function checkForNonexistentOptions(strINI: string) {
 	const ini = new INI().parse(strINI);
 	const iniSections = ini.sections();
 	for (let module of modules) {
 		if (iniSections.includes(module)) {
-			const moduleINI = new INI().parse(fs.readFileSync(`modules/${module}/src/config.ini.module`).toString());
+			const moduleINI = new INI().parse(fs.readFileSync(`modules/${module}/config.ini.module`).toString());
 			for (let option of moduleINI.options(null))
 				if (!ini.options(module).includes(option)) {
 					L.info('Found new option for module, please do these steps:\n\t1. run app again\n\t2. move values from config-old.ini to new created config.ini\n\t3. remove config-old.ini\n\t4. run app again\n\t5. PROFIT');
@@ -46,7 +41,7 @@ function loadConfigINI(): INI {
 			for (let module of modules) {
 				if (!iniSections.includes(module)) {
 					L.info('Adding missing module config to config.ini', {module});
-					const moduleStrINI = fs.readFileSync(`modules/${module}/src/config.ini.module`).toString();
+					const moduleStrINI = fs.readFileSync(`modules/${module}/config.ini.module`).toString();
 					strINI += `\n[${module}]\n` + moduleStrINI + '\n';
 					strINIWasChanged = true;
 
@@ -70,10 +65,10 @@ function loadConfigINI(): INI {
 		L.info('Creating config.ini...');
 
 		var ini: string = "";
-		ini += `[${moduleName}]\n` + fs.readFileSync(`src/config.ini.module`).toString() + '\n';
+		ini += `[${moduleName}]\n` + fs.readFileSync(`${moduleName}/config.ini.module`).toString() + '\n';
 		if (fs.existsSync('modules')) {
 			for (let module of modules)
-				ini += `\n[${module}]\n` + fs.readFileSync(`modules/${module}/src/config.ini.module`).toString() + '\n';
+				ini += `\n[${module}]\n` + fs.readFileSync(`modules/${module}/config.ini.module`).toString() + '\n';
 		} else
 			L.error(`Can\'t check options of config.ini`, null, `./modules folder is not exists`);
 
@@ -134,32 +129,47 @@ export const client = new Discord.Client<true>({
 		activities: [
 			{
 				type: Discord.ActivityType.Custom,
-				name: configINI.get('core', 'activity')
+				name: configINI.get(moduleName, 'activity')
 			},
 		],
 	},
 });
 
-for (let module of modules) {
-	const m = require(`../modules/${module}/src/index`);
-	m.main();
+export function main() {
+	if (fs.existsSync('data.json')) data = JSON.parse(fs.readFileSync('data.json').toString());
+
+	for (let module of fs.readdirSync(`dist/modules`))
+		modules.push(module);
+
+	for (let module of modules) {
+		const m = require(`../modules/${module}/index`);
+		m.main();
+	}
+	if (modules.length > 0) L.info('Modules loaded', {modules: modules.join(', ')});
+
+	SlashCommandsMain();
+
+	const token: string = configINI.get(moduleName, 'token');
+	client.login(token).then((v) => L.info('Client connected', {token}));
 }
-if (modules.length > 0) L.info('Modules loaded', {modules: modules.join(', ')});
 
 //client.on('debug', (m) => console.log(m));
 client.on('warn', (m) => console.log(`\x1b[33m${m}\x1b[0m`));
 client.on('error', (e) => {
 	e.stack;
-	L.error('Unexpected error', null, e, L.stacks[0]);
+
+	var fields: any = {};
+	for (let [i, stack] of L.stacks.entries()) fields[(i + 1) + '. ' + stack.getFunctionName()] = stack.getFileName() + ':' + stack.getLineNumber();
+	L.error('Error!', null, fields);
 });
 client.on("ready", async () => {
-	if (configINI.getBoolean('core', 'printInviteLink'))
+	if (configINI.getBoolean(moduleName, 'printInviteLink'))
 		L.info(`Generated invite link`, {url: generateInviteUrl()});
 });
 process.on('uncaughtException', (e) => {
 	e.stack;
-	L.error('Unexpected error', null, e, L.stacks[3]);
-});
 
-const token: string = configINI.get('core', 'token');
-client.login(token).then((v) => L.info('Client connected', {token}));
+	var fields: any = {};
+	for (let [i, stack] of L.stacks.entries()) fields[(i + 1) + '. ' + stack.getFunctionName()] = stack.getFileName() + ':' + stack.getLineNumber();
+	L.error('Uncaught exception', fields);
+});
