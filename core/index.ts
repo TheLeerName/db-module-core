@@ -1,79 +1,51 @@
 import fs from 'fs';
 import * as Discord from 'discord.js';
-import {ConfigIniParser as INI} from 'config-ini-parser';
 
 import * as L from './logger';
+import { INI } from './ini-parser';
 import { main as SlashCommandsMain } from './slash-commands';
+
 L.init();
 
 const currentDataVersion = 1;
 
 var data: {version: number, guildsData: any, modulesData: any} = {version: currentDataVersion, guildsData: {}, modulesData: {}};
 
+export const config = new INI();
 export const modules: string[] = [];
 export const moduleName = "core";
 
-function checkForNonexistentOptions(strINI: string) {
-	const ini = new INI().parse(strINI);
-	const iniSections = ini.sections();
-	for (let module of modules) {
-		if (iniSections.includes(module)) {
-			const moduleINI = new INI().parse(fs.readFileSync(`modules/${module}/config.ini.module`).toString());
-			for (let option of moduleINI.options(null))
-				if (!ini.options(module).includes(option)) {
-					L.info('Found new option for module, please do these steps:\n\t1. run app again\n\t2. move values from config-old.ini to new created config.ini\n\t3. remove config-old.ini\n\t4. run app again\n\t5. PROFIT');
-					fs.writeFileSync('config-old.ini', strINI);
-					fs.rmSync('config.ini');
-					process.exit();
-				}
-		}
-	}
-}
-
-function loadConfigINI(): INI {
+function loadConfig() {
 	if (fs.existsSync('config.ini')) {
-		var strINI = fs.readFileSync('config.ini').toString();
-		if (fs.existsSync('modules')) {
-			var strINIWasChanged = false;
+		config.fromString(fs.readFileSync('config.ini').toString());
+		const coreSect = config.getSection();
 
-			const ini = new INI().parse(strINI);
-			const iniSections = ini.sections();
-			for (let module of modules) {
-				if (!iniSections.includes(module)) {
-					L.info('Adding missing module config to config.ini', {module});
-					const moduleStrINI = fs.readFileSync(`modules/${module}/config.ini.module`).toString();
-					strINI += `\n[${module}]\n` + moduleStrINI + '\n';
-					strINIWasChanged = true;
+		var prevVersion: number = config.header != null ? parseInt(config.header.substring('INI version '.length)) : 0
+		var version: number = prevVersion;
+		if (version == 0) {
+			version++;
 
-					const moduleINI = new INI().parse(moduleStrINI);
-					for (let option of moduleINI.options(null)) {
-						if (option.length == 0) {
-							L.error("Parameter isn't specified in config.ini", {module, missingParameter: option});
-							process.exit();
-						}
-					}
-				}
-			}
+			const oldCoreSect = config.getSection('core');
+			for (let param of ['token', 'activity', 'printInviteLink'])
+				coreSect.setValue(param, oldCoreSect.getValue(param));
+			config.deleteSection('core');
+		}
+		// add ini version changes here
+		if (prevVersion != version) {
+			L.info(`Updated config.ini version from ${prevVersion} to ${version}`);
+			config.header = 'INI version ' + version;
+			config.save('config.ini');
+		}
 
-			if (strINIWasChanged) fs.writeFileSync('config.ini', strINI);
-			checkForNonexistentOptions(strINI);
-		} else
-			L.error(`Can\'t check options of config.ini`, null, `./modules folder is not exists`);
-
-		return new INI().parse(strINI);
+		if (coreSect.getValue<string>('token')!.length < 1) {
+			L.error(`Parameter isn't specified in config.ini`, {missingParameter: "token"});
+			process.exit();
+		}
 	} else {
 		L.info('Creating config.ini...');
 
-		var ini: string = "";
-		ini += `[${moduleName}]\n` + fs.readFileSync(`${moduleName}/config.ini.module`).toString() + '\n';
-		if (fs.existsSync('modules')) {
-			for (let module of modules)
-				ini += `\n[${module}]\n` + fs.readFileSync(`modules/${module}/config.ini.module`).toString() + '\n';
-		} else
-			L.error(`Can\'t check options of config.ini`, null, `./modules folder is not exists`);
-
-		fs.writeFileSync('config.ini', ini);
-		L.info('Please specify parameters in config.ini or take them from config-old.ini and run app again');
+		fs.writeFileSync('config.ini', config.toString());
+		L.info('Please specify parameters in config.ini and run app again');
 		process.exit();
 	}
 }
@@ -107,8 +79,6 @@ export function generateInviteUrl(): string {
 	});
 }
 
-export const configINI: INI = loadConfigINI();
-
 export const client = new Discord.Client<true>({
 	failIfNotExists: false,
 	intents: [
@@ -125,31 +95,35 @@ export const client = new Discord.Client<true>({
 		Discord.Partials.Message,
 		Discord.Partials.Reaction,
 	],
-	presence: {
-		activities: [
-			{
-				type: Discord.ActivityType.Custom,
-				name: configINI.get(moduleName, 'activity')
-			},
-		],
-	},
 });
 
 export function main() {
 	if (fs.existsSync('data.json')) data = JSON.parse(fs.readFileSync('data.json').toString());
 
-	for (let module of fs.readdirSync(`dist/modules`))
+	if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
 		modules.push(module);
 
 	for (let module of modules) {
 		const m = require(`../modules/${module}/index`);
-		m.main();
+		m.main?.();
 	}
+
+	const coreSection = config.getSection();
+	coreSection
+	.addValue('token', '', 'discord bot token: https://discord.com/developers/applications')
+	.addValue('activity', 'ᗜˬᗜ', 'this will appear as activity of discord bot')
+	.addValue('printInviteLink', true, 'if true, invite bot link will be printed in console');
+	loadConfig();
+	/*client.user.setPresence({activities: [{
+		type: Discord.ActivityType.Custom,
+		name: coreSection.getValue('activity') ?? ""
+	}]});*/
+
 	if (modules.length > 0) L.info('Modules loaded', {modules: modules.join(', ')});
 
 	SlashCommandsMain();
 
-	const token: string = configINI.get(moduleName, 'token');
+	const token = coreSection.getValue<string>('token')!;
 	client.login(token).then((v) => L.info('Client connected', {token}));
 }
 
@@ -163,13 +137,6 @@ client.on('error', (e) => {
 	L.error('Error!', null, fields);
 });
 client.on("ready", async () => {
-	if (configINI.getBoolean(moduleName, 'printInviteLink'))
+	if (config.getSection(moduleName).getValue<boolean>('printInviteLink')!)
 		L.info(`Generated invite link`, {url: generateInviteUrl()});
-});
-process.on('uncaughtException', (e) => {
-	e.stack;
-
-	var fields: any = {};
-	for (let [i, stack] of L.stacks.entries()) fields[(i + 1) + '. ' + stack.getFunctionName()] = stack.getFileName() + ':' + stack.getLineNumber();
-	L.error('Uncaught exception', fields);
 });

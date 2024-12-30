@@ -1,6 +1,0 @@
-# discord bot token: https://discord.com/developers/applications
-token=
-# this will appear as activity of discord bot
-activity=Listening Twitch streams
-# If true, invite bot link will be printed in console
-printInviteLink=true
