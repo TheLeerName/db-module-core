@@ -8,13 +8,8 @@ const pingCommand = new SlashCommand()
 .setCallback(async(interaction) => {
 	if (interaction.guild == null || !interaction.isChatInputCommand()) return;
 
-	await interaction.reply({embeds: [new EmbedBuilder()
-		.setTitle(`:hourglass_flowing_sand: Пингую...`)
-		.setColor("#ffe8b6")
-	]});
-
 	try {
-		await interaction.editReply({embeds: [new EmbedBuilder()
+		await interaction.reply({embeds: [new EmbedBuilder()
 			.setTitle(`:ping_pong: Понг!`)
 			.addFields(
 				{name: "Пинг бота", value: humanizeDuration(interaction.createdTimestamp - Date.now())},
@@ -24,7 +19,7 @@ const pingCommand = new SlashCommand()
 			.setColor("#77b255")
 		]});
 	} catch(e) {
-		await interaction.editReply({embeds: [new EmbedBuilder()
+		await interaction.reply({embeds: [new EmbedBuilder()
 			.setTitle(`:x: Произошла ошибка при пинге бота!`)
 			.setDescription(`\`\`\`\n${e}\n\`\`\``)
 			.setColor("#dd2e44")
