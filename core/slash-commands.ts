@@ -6,11 +6,16 @@ import hD from 'humanize-duration';
 import * as Discord from 'discord.js';
 
 export class SlashCommand extends Discord.SlashCommandBuilder {
-	callback: SlashCommandCallback | null = null;
+	chatInput: SlashCommandChatInput | null = null;
+	autocomplete: SlashCommandAutocomplete | null = null;
 	subcommands: SlashSubcommand[] = [];
 
-	setCallback(callback: SlashCommandCallback) {
-		this.callback = callback;
+	setChatInput(chatInput: SlashCommandChatInput) {
+		this.chatInput = chatInput;
+		return this;
+	}
+	setAutocomplete(autocomplete: SlashCommandAutocomplete) {
+		this.autocomplete = autocomplete;
 		return this;
 	}
 
@@ -24,16 +29,23 @@ export class SlashCommand extends Discord.SlashCommandBuilder {
 }
 
 export class SlashSubcommand extends Discord.SlashCommandSubcommandBuilder {
-	callback: SlashCommandCallback;
+	chatInput: SlashCommandChatInput | null = null;
+	autocomplete: SlashCommandAutocomplete | null = null;
 
-	setCallback(callback: SlashCommandCallback) {
-		this.callback = callback;
+	setChatInput(chatInput: SlashCommandChatInput) {
+		this.chatInput = chatInput;
+		return this;
+	}
+	setAutocomplete(autocomplete: SlashCommandAutocomplete) {
+		this.autocomplete = autocomplete;
 		return this;
 	}
 }
 
-export type SlashCommandCallback = (interaction: Discord.ChatInputCommandInteraction<Discord.CacheType> | Discord.AutocompleteInteraction<Discord.CacheType>)=>Promise<void>;
-export const slashCommands: SlashCommand[] = [];
+export type SlashCommandChatInput = (interaction: Discord.ChatInputCommandInteraction<Discord.CacheType>)=>Promise<any | void>;
+export type SlashCommandAutocomplete = (interaction: Discord.AutocompleteInteraction<Discord.CacheType>)=>Promise<any | void>;
+//export const globalSlashCommands: SlashCommand[] = []; // for future
+export const guildSlashCommands: SlashCommand[] = [];
 
 export function humanizeDuration(n: number) {
 	return hD(n, {language: "ru", units: ["d", "h", "m", "s", "ms"]});
@@ -41,7 +53,7 @@ export function humanizeDuration(n: number) {
 
 export async function updateSlashCommands(guild: Discord.Guild): Promise<number> {
 	const commandsJSON = [];
-	for (let slashCommand of slashCommands) commandsJSON.push(slashCommand.toJSON());
+	for (let slashCommand of guildSlashCommands) commandsJSON.push(slashCommand.toJSON());
 	await guild.commands.set(commandsJSON);
 
 	L.info(`Successfully updated ${commandsJSON.length} slash commands`);
@@ -53,31 +65,34 @@ function loadSlashCommandsScriptsFromFolder(folder: string) {
 	if (fs.existsSync(folder)) for (let commandScript of fs.readdirSync(folder))
 		if (commandScript.endsWith('.js')) {
 			const m = require(folder + '/' + commandScript.substring(0, commandScript.lastIndexOf('.')));
-			if (m.main != null) slashCommands.push(...m.main());
+			if (m.main != null) guildSlashCommands.push(...m.main());
 		}
 }
 
 export function main() {
-	for (let module of modules) loadSlashCommandsScriptsFromFolder('../modules/' + module + '/slash-commands');
-	loadSlashCommandsScriptsFromFolder('slash-commands');
+	for (let module of modules) loadSlashCommandsScriptsFromFolder('../modules/' + module + '/slash-commands'); // dist/modules/<module>/slash-commands
+	loadSlashCommandsScriptsFromFolder('slash-commands'); // dist/core/slash-commands
 
-	if (slashCommands.length > 0) {
+	if (guildSlashCommands.length > 0) {
 		//client.on('ready', client => { for (let guild of client.guilds.cache.values()) updateSlashCommands(guild); });
 		client.on('guildCreate', updateSlashCommands);
 		client.on('interactionCreate', interactionCreate);
 
-		var commands = []; for (let command of slashCommands) commands.push(command.name);
+		var commands = []; for (let command of guildSlashCommands) commands.push(command.name);
 		L.info('Slash commands loaded', {commands: commands.join(', ')});
 	}
 }
 
 async function interactionCreate(interaction: Discord.Interaction) {
 	if (interaction.isChatInputCommand() || interaction.isAutocomplete())
-		for (let slashCommand of slashCommands)
+		for (let slashCommand of guildSlashCommands)
 			if (slashCommand.name == interaction.commandName) {
-				slashCommand.callback?.(interaction);
+				if (interaction.isChatInputCommand()) slashCommand.chatInput?.(interaction);
+				else if (interaction.isAutocomplete()) slashCommand.autocomplete?.(interaction);
 				for (let slashSubcommand of slashCommand.subcommands)
-					if (slashSubcommand.name == interaction.options.getSubcommand())
-						slashSubcommand.callback?.(interaction);
+					if (slashSubcommand.name == interaction.options.getSubcommand()) {
+						if (interaction.isChatInputCommand()) slashCommand.chatInput?.(interaction);
+						else if (interaction.isAutocomplete()) slashCommand.autocomplete?.(interaction);
+					}
 			}
 }

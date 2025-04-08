@@ -5,9 +5,7 @@ const pingCommand = new SlashCommand()
 .setName('ping')
 .setDescription('Pings bot')
 .setDescriptionLocalization('ru', 'Пингует бота')
-.setCallback(async(interaction) => {
-	if (interaction.guild == null || !interaction.isChatInputCommand()) return;
-
+.setChatInput(async(interaction) => {
 	try {
 		await interaction.reply({embeds: [new EmbedBuilder()
 			.setTitle(`:ping_pong: Понг!`)

@@ -5,8 +5,8 @@ const updateCommand = new SlashCommand()
 .setName('update')
 .setDescription('Updates slash commands of bot')
 .setDescriptionLocalization('ru', "Обновляет слэш-команды бота")
-.setCallback(async(interaction) => {
-	if (interaction.guild == null || !interaction.isChatInputCommand()) return;
+.setChatInput(async(interaction) => {
+	if (interaction.guild == null) return;
 
 	try {
 		const count = await updateSlashCommands(interaction.guild);
