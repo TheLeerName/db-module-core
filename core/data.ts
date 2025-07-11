@@ -99,12 +99,10 @@ export class Data {
 				this.guilds["guest-text-channel"] = this.guilds["stage-channel"];
 				delete this.guilds["stage-channel"];
 				for (const g of Object.values<any>(this.guilds["guest-text-channel"])) {
-					console.log(JSON.stringify(g));
 					g.voice_channel_id = g.stageChannelID;
 					delete g.stageChannelID;
 					g.text_channel_id = g.textChannelID;
 					delete g.textChannelID;
-					console.log(JSON.stringify(g));
 				}
 			}
 
