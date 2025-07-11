@@ -1,29 +1,32 @@
 import { SlashCommand, humanizeDuration } from './../slash-commands';
 import { EmbedBuilder } from 'discord.js';
+import * as L from './../logger';
 
 const pingCommand = new SlashCommand()
 .setName('ping')
 .setDescription('Pings bot')
 .setDescriptionLocalization('ru', 'Пингует бота')
 .setChatInput(async(interaction) => {
-	try {
-		await interaction.reply({embeds: [new EmbedBuilder()
-			.setTitle(`:ping_pong: Понг!`)
-			.addFields(
-				{name: "Пинг бота", value: humanizeDuration(interaction.createdTimestamp - Date.now())},
-				{name: "Пинг от Discord API", value: humanizeDuration(interaction.client.ws.ping)},
-				{name: "Аптайм", value: humanizeDuration(interaction.client.uptime)},
-			)
-			.setColor("#77b255")
-		]});
-	} catch(e) {
-		await interaction.reply({embeds: [new EmbedBuilder()
-			.setTitle(`:x: Произошла ошибка при пинге бота!`)
-			.setDescription(`\`\`\`\n${e}\n\`\`\``)
-			.setColor("#dd2e44")
-			.setFooter({text: `Пинг: ${humanizeDuration(interaction.createdTimestamp - Date.now())}`})
-		]});
-	}
+	const ping_bot = interaction.createdTimestamp - Date.now();
+	const ping_api = interaction.client.ws.ping;
+	const uptime = interaction.client.uptime;
+
+	L.info(`Command ping success`, {
+		user: interaction.user.username + (interaction.guild ? ` (${interaction.guild.name})` : ""),
+		ping_bot: `${ping_bot}ms`,
+		ping_discord_api: `${ping_api}ms`,
+		uptime: `${uptime / 1000}s`
+	});
+
+	await interaction.reply({embeds: [new EmbedBuilder()
+		.setTitle(`:ping_pong: Понг!`)
+		.addFields(
+			{name: "Пинг бота", value: humanizeDuration(ping_bot)},
+			{name: "Пинг от Discord API", value: humanizeDuration(ping_api)},
+			{name: "Аптайм", value: humanizeDuration(interaction.client.uptime)},
+		)
+		.setColor("#77b255")
+	]});
 });
 
 export function main(): SlashCommand[] {

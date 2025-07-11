@@ -2,4 +2,7 @@ node_modules
 dist
 
 config.ini
-data.json
+
+data/
+modules/guest-text-channel
+modules/verification-reaction

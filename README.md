@@ -20,15 +20,20 @@ git clone https://github.com/TheLeerName/db-module-core
 git submodule update --init <module_name>
 ```
 8. Now compile with command:
+> [!IMPORTANT]
+> if you removing/adding modules, make sure to remove `dist` folder before doing this
 ```
-npx tsc
+npm run build
 ```
-9. Start app with `run.bat` script
-10. App will ask about changing parameters in `config.ini`, so do it and go to next step
-11. Start bot with `run.bat` script again yeah
+9. Open terminal
+10. Run `node index.js`
+10. Change parameters in generated `config.ini`
+11. Start bot again with `node index.js`
 
 ## Q/A
 | Question | Answer |
 |---|---|
 | How to remove module? | Remove folder of module in `modules` folder |
 | How to add specific module? (for example: `modules/twitch-notifications`) | Run command: `git submodule update --init modules/twitch-notifications` |
+> [!IMPORTANT]
+> make sure to remove `dist` folder after adding/removing modules

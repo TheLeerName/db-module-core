@@ -3,17 +3,26 @@ import * as Discord from 'discord.js';
 
 import * as L from './logger';
 import { INI } from './ini-parser';
+import { Data, config_version } from './data';
 import { main as SlashCommandsMain } from './slash-commands';
 
 L.init();
 
-const currentDataVersion = 1;
-
-var data: {version: number, guildsData: any, modulesData: any} = {version: currentDataVersion, guildsData: {}, modulesData: {}};
-
+export const all_data = new Data();
 export const config = new INI();
+export const version = "__VERSION__";
 export const modules: string[] = [];
 export const moduleName = "core";
+
+export async function getDiscordChannelByID(discord_channel_id: string): Promise<Discord.Channel | false> {
+	var channel = client.channels.cache.get(discord_channel_id) ?? null;
+	if (!channel) {
+		channel = await client.channels.fetch(discord_channel_id);
+		if (channel) client.channels.cache.set(discord_channel_id, channel);
+	}
+	if (channel == null) return false;
+	return channel;
+}
 
 function loadConfig() {
 	if (fs.existsSync('config.ini')) {
@@ -50,26 +59,6 @@ function loadConfig() {
 	}
 }
 
-export function getModuleData(name: string): any {
-	return data.modulesData[name];
-}
-
-export function getModuleGuildsData(name: string): any {
-	const json: any = {};
-	for (let [guildID, modules] of Object.entries<any>(data.guildsData))
-		json[guildID] = modules[name];
-	return json;
-}
-export function saveModuleData(name: string, guildsData?: any, moduleData?: any) {
-	if (moduleData != null) data.modulesData[name] = moduleData;
-
-	if (guildsData != null) for (let [guildID, guildData] of Object.entries<any>(guildsData)) {
-		if (data.guildsData[guildID] == null) data.guildsData[guildID] = {};
-		data.guildsData[guildID][name] = guildData;
-	}
-	fs.writeFileSync('data.json', JSON.stringify(data, null, '\t'));
-}
-
 export function generateInviteUrl(): string {
 	return client.generateInvite({
 		scopes: [Discord.OAuth2Scopes.Bot],
@@ -98,13 +87,17 @@ export const client = new Discord.Client<true>({
 });
 
 export function main() {
-	if (fs.existsSync('data.json')) data = JSON.parse(fs.readFileSync('data.json').toString());
+	L.info(`Running version ${version}`);
 
-	if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
-		modules.push(module);
+	//if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
+		//modules.push(module);
+	//modules.push("guest-text-channel", "verification-reaction");
+	modules.push("twitch-notifications");
 
+	const modules_require = [];
 	for (let module of modules) {
 		const m = require(`../modules/${module}/index`);
+		modules_require.push(m);
 		m.main?.();
 	}
 
@@ -114,28 +107,36 @@ export function main() {
 	.addValue('activity', 'ᗜˬᗜ', 'this will appear as activity of discord bot')
 	.addValue('printInviteLink', true, 'if true, invite bot link will be printed in console');
 	loadConfig();
-	/*client.user.setPresence({activities: [{
-		type: Discord.ActivityType.Custom,
-		name: coreSection.getValue('activity') ?? ""
-	}]});*/
+	const header = `INI version ${config_version}`;
+	if (config.header !== header) {
+		config.header = header;
+		config.save("config.ini");
+		L.info(`File config.ini was updated to version ${config_version}, check new options and run then app again`);
+		process.exit(0);
+	}
+
+	const args = process.argv.slice(2);
+	for (let m of modules_require) {
+		if (m.terminalCommands?.(args) === true) return process.exit(0);
+	}
 
 	if (modules.length > 0) L.info('Modules loaded', {modules: modules.join(', ')});
 
 	SlashCommandsMain();
 
 	const token = coreSection.getValue<string>('token')!;
-	client.login(token).then((v) => L.info('Client connected', {token}));
+	client.login(token).then((v) => {
+		L.info('Client connected', {token});
+		client.user.setPresence({activities: [{
+			type: Discord.ActivityType.Custom,
+			name: (coreSection.getValue<string>('activity') ?? "").replaceAll("%version%", version)
+		}]});
+	});
 }
 
 //client.on('debug', (m) => console.log(m));
 client.on('warn', (m) => console.log(`\x1b[33m${m}\x1b[0m`));
-client.on('error', (e) => {
-	e.stack;
-
-	var fields: any = {};
-	for (let [i, stack] of L.stacks.entries()) fields[(i + 1) + '. ' + stack.getFunctionName()] = stack.getFileName() + ':' + stack.getLineNumber();
-	L.error('Error!', null, fields);
-});
+client.on('error', (e) => { throw e; });
 client.on("ready", async () => {
 	if (config.getSection(moduleName).getValue<boolean>('printInviteLink')!)
 		L.info(`Generated invite link`, {url: generateInviteUrl()});

@@ -51,13 +51,8 @@ export function humanizeDuration(n: number) {
 	return hD(n, {language: "ru", units: ["d", "h", "m", "s", "ms"]});
 }
 
-export async function updateSlashCommands(guild: Discord.Guild): Promise<number> {
-	const commandsJSON = [];
-	for (let slashCommand of guildSlashCommands) commandsJSON.push(slashCommand.toJSON());
-	await guild.commands.set(commandsJSON);
-
-	L.info(`Successfully updated ${commandsJSON.length} slash commands`);
-	return commandsJSON.length;
+export async function updateSlashCommands(guild: Discord.Guild) {
+	await guild.commands.set(guildSlashCommands.map(v => v.toJSON()));
 }
 
 function loadSlashCommandsScriptsFromFolder(folder: string) {
@@ -91,8 +86,8 @@ async function interactionCreate(interaction: Discord.Interaction) {
 				else if (interaction.isAutocomplete()) slashCommand.autocomplete?.(interaction);
 				for (let slashSubcommand of slashCommand.subcommands)
 					if (slashSubcommand.name == interaction.options.getSubcommand()) {
-						if (interaction.isChatInputCommand()) slashCommand.chatInput?.(interaction);
-						else if (interaction.isAutocomplete()) slashCommand.autocomplete?.(interaction);
+						if (interaction.isChatInputCommand()) slashSubcommand.chatInput?.(interaction);
+						else if (interaction.isAutocomplete()) slashSubcommand.autocomplete?.(interaction);
 					}
 			}
 }

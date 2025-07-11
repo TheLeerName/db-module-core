@@ -99,7 +99,6 @@ export class INI {
 
 	sections: Map<string, Section> = new Map();
 	header: string | null = null;
-	version: number | null = null;
 
 	constructor(DEFAULT_SECTION?: string) {
 		if (DEFAULT_SECTION != null) this.DEFAULT_SECTION = DEFAULT_SECTION;
@@ -126,7 +125,8 @@ export class INI {
 	getSection(section?: string | Section | null) {
 		if (section instanceof Section) return section;
 		section ??= this.DEFAULT_SECTION;
-		return this.sections.get(section) ?? this.addSection(section);
+		this.addSection(section);
+		return this.sections.get(section)!;
 	}
 
 	save(fileName: string) {

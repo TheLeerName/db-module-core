@@ -15,8 +15,8 @@
 		"strictPropertyInitialization": false,
 		"emitDecoratorMetadata": true,
 	},
-	"exclude": [
-		"node_modules",
-		"dist"
+	"include": [
+		"core",
+		"modules"
 	]
 }
