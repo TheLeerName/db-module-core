@@ -89,10 +89,8 @@ export const client = new Discord.Client<true>({
 export function main() {
 	L.info(`Running version ${version}`);
 
-	//if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
-		//modules.push(module);
-	//modules.push("guest-text-channel", "verification-reaction");
-	modules.push("twitch-notifications");
+	if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
+		modules.push(module);
 
 	const modules_require = [];
 	for (let module of modules) {
