@@ -1,8 +1,9 @@
-node_modules
-dist
+/node_modules
+/dist
+/package-lock.json
 
-config.ini
+/config.ini
 
-data/
-modules/guest-text-channel
-modules/verification-reaction
+/data/
+/modules/guest-text-channel
+/modules/verification-reaction
