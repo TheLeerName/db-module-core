@@ -5,7 +5,7 @@ export function info(message: any, values?: any | null) {
 	message = start(stack) + message;
 
 	for (let [k, v] of Object.entries<any>(values))
-		message += `\n\t${k}: \x1b[32m${v}\x1b[0m`;
+		message += `\n\t${k}: \x1b[32m${typeof v === "object" ? JSON.stringify(v) : v}\x1b[0m`;
 
 	console.log(message);
 }
@@ -18,7 +18,7 @@ export function error(whatHappened: any, values?: any | null, whyItHappened?: st
 	whatHappened = start(stack) + whatHappened;
 
 	for (let [k, v] of Object.entries<any>(values))
-		whatHappened += `\n\t${k}: \x1b[32m${v}\x1b[0m`;
+		whatHappened += `\n\t${k}: \x1b[32m${typeof v === "object" ? JSON.stringify(v) : v}\x1b[0m`;
 	if (whyItHappened != null) {
 		if (isError(whyItHappened)) {
 			whatHappened += `\n\terror: \x1b[33m${whyItHappened.message.includes('\n') ? whyItHappened.message.substring(0, whyItHappened.message.indexOf('\n')) : whyItHappened.message}\x1b[0m`;
