@@ -1,7 +1,7 @@
 import fs from "fs";
 import * as L from './logger';
 
-export const config_version = 2;
+export const config_version = 3;
 
 export class Data {
 	readonly version_path = "data/version.json";

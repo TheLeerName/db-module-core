@@ -230,7 +230,7 @@ export class INI {
 				case "number": return parseFloat(v);
 			}
 
-			if (v.match("[^0-9]") == null) return parseFloat(v);
+			//if (v.match("[^0-9]") == null) return parseFloat(v);
 			if (v == 'true') return true;
 			if (v == 'false') return false;
 
