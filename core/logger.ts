@@ -110,6 +110,7 @@ export async function initDiscordLogging(bot_creator_id: string) {
 		if (fn && ln) fn += `:${ln}`;
 
 		const embed = new Discord.EmbedBuilder()
+		.setColor("Aqua")
 		.setTitle(message)
 		.setFields(...Object.entries(values).map(([name, value]) => { return { name, value: `\`${typeof value === "object" ? JSON.stringify(value) : value}\`` }}));
 		if (fn) embed.setAuthor({name: fn});
@@ -126,6 +127,7 @@ export async function initDiscordLogging(bot_creator_id: string) {
 		if (fn && ln) fn += `:${ln}`;
 
 		const embed = new Discord.EmbedBuilder()
+		.setColor("Red")
 		.setTitle(message)
 		.setFields(...Object.entries(values).map(([name, value]) => { return { name, value: `\`${typeof value === "object" ? JSON.stringify(value) : value}\`` }}));
 		if (fn) embed.setAuthor({name: fn});
