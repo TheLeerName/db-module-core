@@ -9,12 +9,14 @@ const updateCommand = new SlashCommand()
 .setChatInput(async(interaction) => {
 	if (interaction.guild == null) return;
 
+	const start = Date.now();
+	await interaction.deferReply();
 	await updateSlashCommands(interaction.guild);
 	L.info(`Command update success`, { user: `${interaction.user.username} (${interaction.guild.name})` });
-	await interaction.reply({embeds: [new EmbedBuilder()
+	await interaction.editReply({embeds: [new EmbedBuilder()
 		.setTitle(`:white_check_mark: Слэш-команды были успешно обновлены`)
 		.setColor("#77b255")
-		.setFooter({text: `Пинг: ${humanizeDuration(interaction.createdTimestamp - Date.now())}`})
+		.setFooter({text: `Время обработки: ${humanizeDuration(Date.now() - start)}`})
 	]});
 });
 

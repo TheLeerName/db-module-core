@@ -7,9 +7,9 @@ const pingCommand = new SlashCommand()
 .setDescription('Pings bot')
 .setDescriptionLocalization('ru', 'Пингует бота')
 .setChatInput(async(interaction) => {
-	await interaction.deferReply();
+	const defer = await interaction.deferReply();
 
-	const ping_bot = Date.now() - interaction.createdTimestamp;
+	const ping_bot = defer.createdTimestamp - interaction.createdTimestamp;
 	const ping_api = interaction.client.ws.ping;
 	const uptime = interaction.client.uptime;
 
