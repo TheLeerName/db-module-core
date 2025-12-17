@@ -6,8 +6,6 @@ import { INI } from './ini-parser';
 import { Data, config_version } from './data';
 import { main as SlashCommandsMain } from './slash-commands';
 
-L.init();
-
 export const all_data = new Data();
 export const config = new INI();
 export const version = "__VERSION__";
@@ -91,7 +89,9 @@ export const client = new Discord.Client<true>({
 	],
 });
 
-export function main() {
+
+export async function main2() {
+	L.init();
 	L.info(`Running version ${version}`);
 
 	if (fs.existsSync(`dist/modules`)) for (let module of fs.readdirSync(`dist/modules`))
