@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
+    "rimraf": "^6.1.2",
     "typescript": "^5.6.3"
   },
   "dependencies": {
@@ -9,6 +10,7 @@
     "twitch.ts": "github:TheLeerName/twitch.ts"
   },
   "scripts": {
-    "build": "npx tsc & node set-version.js"
+    "clean": "rimraf dist/",
+    "build": "npm run clean & npx tsc & node set-version.js"
   }
 }
