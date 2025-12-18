@@ -149,10 +149,12 @@ export async function main() {
 
 		L.info('Bot connected', {token});
 
-		client.user.setPresence({activities: [{
-			type: Discord.ActivityType.Custom,
-			name: (coreSection.getValue<string>('activity') ?? "").replaceAll("%version%", version)
-		}]});
+		client.on("ready", () => {
+			client.user.setPresence({activities: [{
+				type: Discord.ActivityType.Custom,
+				name: (coreSection.getValue<string>('activity') ?? "").replaceAll("%version%", version)
+			}]});
+		});
 	});
 }
 
