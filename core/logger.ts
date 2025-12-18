@@ -90,7 +90,7 @@ export function isError(error: string | Error): error is Error {
 export function getStack(err?: Error): NodeJS.CallSite {
 	const e = err ?? new Error();
 	e.stack;
-	return stacks[2];
+	return stacks[0];
 }
 
 export async function initDiscordLogging(bot_creator_id: string) {
