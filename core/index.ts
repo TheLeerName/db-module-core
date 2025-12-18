@@ -90,7 +90,7 @@ export const client = new Discord.Client<true>({
 });
 
 
-export async function main2() {
+export async function main() {
 	L.init();
 	L.info(`Running version ${version}`);
 
