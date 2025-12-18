@@ -142,19 +142,17 @@ export async function main() {
 	SlashCommandsMain();
 
 	const token = coreSection.getValue<string>('token')!;
+	client.on("ready", () => {
+		L.info('Bot connected', {token});
+		client.user.setPresence({activities: [{
+			type: Discord.ActivityType.Custom,
+			name: (coreSection.getValue<string>('activity') ?? "").replaceAll("%version%", version)
+		}]});
+	});
 	client.login(token).then(async(v) => {
 		const bot_creator_id = coreSection.getValue<string>("botCreatorDiscordID");
 		if (bot_creator_id && coreSection.getValue<boolean>("sendLogToDM"))
 			await L.initDiscordLogging(bot_creator_id);
-
-		L.info('Bot connected', {token});
-
-		client.on("ready", () => {
-			client.user.setPresence({activities: [{
-				type: Discord.ActivityType.Custom,
-				name: (coreSection.getValue<string>('activity') ?? "").replaceAll("%version%", version)
-			}]});
-		});
 	});
 }
 
